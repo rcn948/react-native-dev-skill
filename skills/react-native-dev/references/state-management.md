@@ -180,3 +180,90 @@ const { todos, loading } = useTodoStore(
   useShallow((s) => ({ todos: s.todos, loading: s.loading }))
 );
 ```
+
+## MMKV (고속 동기 스토리지)
+
+AsyncStorage보다 훨씬 빠른 동기 스토리지. 자주 접근하는 데이터에 적합.
+
+```bash
+npx expo install react-native-mmkv
+```
+
+### 기본 사용
+```tsx
+import { MMKV } from 'react-native-mmkv';
+
+const storage = new MMKV();
+
+// 동기 — await 불필요
+storage.set('user.name', 'John');
+const name = storage.getString('user.name');
+
+storage.set('user.age', 25);
+const age = storage.getNumber('user.age');
+
+storage.set('user.premium', true);
+const isPremium = storage.getBoolean('user.premium');
+
+storage.delete('user.name');
+storage.clearAll();
+
+// JSON
+storage.set('user', JSON.stringify(user));
+const user = JSON.parse(storage.getString('user') || '{}');
+```
+
+### useMMKV 훅
+```tsx
+import { useMMKVString, useMMKVNumber, useMMKVBoolean } from 'react-native-mmkv';
+
+function Settings() {
+  const [theme, setTheme] = useMMKVString('theme');
+  const [fontSize, setFontSize] = useMMKVNumber('fontSize');
+  const [notifications, setNotifications] = useMMKVBoolean('notifications');
+
+  return (
+    <>
+      <Switch value={theme === 'dark'} onValueChange={(dark) => setTheme(dark ? 'dark' : 'light')} />
+      <Slider value={fontSize} onValueChange={setFontSize} />
+      <Switch value={notifications} onValueChange={setNotifications} />
+    </>
+  );
+}
+```
+
+### Zustand + MMKV Persist
+```tsx
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { MMKV } from 'react-native-mmkv';
+
+const storage = new MMKV();
+
+const mmkvStorage = {
+  getItem: (name: string) => storage.getString(name) ?? null,
+  setItem: (name: string, value: string) => storage.set(name, value),
+  removeItem: (name: string) => storage.delete(name),
+};
+
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
+      theme: 'light',
+      setTheme: (theme) => set({ theme }),
+    }),
+    {
+      name: 'settings-storage',
+      storage: createJSONStorage(() => mmkvStorage),
+    }
+  )
+);
+```
+
+### 스토리지 선택 가이드
+
+| 스토리지 | 속도 | 동기 | 용도 |
+|----------|------|------|------|
+| AsyncStorage | 느림 | 비동기 | 간단한 앱, 소량 데이터 |
+| MMKV | 빠름 | 동기 | 대량 데이터, 빈번한 접근 |
+| SecureStore | 보통 | 비동기 | 민감 데이터 (토큰, 비밀번호) |

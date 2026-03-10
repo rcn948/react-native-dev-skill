@@ -1,15 +1,67 @@
-# NativeWind v4 스타일링 가이드
+# NativeWind 스타일링 가이드
 
 ## 목차
-1. [설치 및 설정](#설치-및-설정)
-2. [기본 사용법](#기본-사용법)
-3. [다크 모드](#다크-모드)
-4. [반응형 디자인](#반응형-디자인)
-5. [커스텀 테마](#커스텀-테마)
-6. [애니메이션](#애니메이션)
-7. [웹 포함 시 대안](#웹-포함-시-대안)
+1. [NativeWind v5 설정 (Tailwind v4)](#nativewind-v5-설정)
+2. [NativeWind v4 설정 (레거시)](#nativewind-v4-설정)
+3. [기본 사용법](#기본-사용법)
+4. [다크 모드](#다크-모드)
+5. [반응형 디자인](#반응형-디자인)
+6. [커스텀 테마](#커스텀-테마)
+7. [애니메이션](#애니메이션)
+8. [웹 포함 시 대안](#웹-포함-시-대안)
 
-## 설치 및 설정
+## NativeWind v5 설정
+
+NativeWind v5는 Tailwind CSS v4 기반. **Babel 플러그인 불필요**, CSS-first 설정.
+
+```bash
+npx expo install nativewind@next tailwindcss@next
+```
+
+### global.css (Tailwind v4 — @theme 블록)
+```css
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3b82f6;
+  --color-primary-dark: #2563eb;
+  --color-accent: #f59e0b;
+  --font-sans: 'Pretendard';
+}
+```
+
+### metro.config.js
+```js
+const { getDefaultConfig } = require('expo/metro-config');
+const { withNativeWind } = require('nativewind/metro');
+
+const config = getDefaultConfig(__dirname);
+module.exports = withNativeWind(config, { input: './global.css' });
+```
+
+### app/_layout.tsx
+```tsx
+import '../global.css';
+
+// v5에서는 cssInterop 대신 useCssElement로 래핑
+import { useCssElement } from 'nativewind';
+```
+
+### babel.config.js (v5는 NativeWind Babel preset 불필요)
+```js
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+  };
+};
+```
+
+---
+
+## NativeWind v4 설정
+
+Tailwind CSS v3 기반. Expo SDK 52 이하에서 사용.
 
 ```bash
 npx expo install nativewind tailwindcss
